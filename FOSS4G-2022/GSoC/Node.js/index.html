@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Node.js support for ZOO-Project | GSoC 2022 | FOSS4G-2022</title>
+    <meta content="ZOO Project GSoC presentation at FOSS4G 2022" name="description">
+    <meta content="Momtchil Momtchev" name="author">
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+    <link href="../../../assets/css/bootstrap.css" rel="stylesheet">
+    <link href="../../../assets/css/reveal.min.css" rel="stylesheet">
+    <link href="../../../assets/css/theme/beige.css" id="theme" rel="stylesheet">
+    <!-- <link href='http://fonts.googleapis.com/css?family=Days+One' rel='stylesheet' type='text/css'>-->
+    <!-- If the query includes 'print-pdf', include the PDF print sheet -->
+    <script>
+        if (window.location.search.match(/print-pdf/gi)) {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = '../../../assets/css/print/pdf.css';
+            document.getElementsByTagName('head')[0].appendChild(link);
+        }
+    </script>
+    <!--[if lt IE 9]>
+        <script src="../../../assets/lib/js/html5shiv.js"></script>
+        <![endif]-->
+</head>
+
+<body>
+    <a class="event" href="https://2022.foss4g.org/" target="_blank"><img class="img-thumbnail" height="160" src="https://2022.foss4g.org/img/logo/logo-dark.png" width="250"></a> <a class="osgeo"
+        href="http://osgeo.org" target="_blank"><img height="65" src="http://www.osgeo.org/wp-content/themes/roots/assets/img/logo-osgeo.svg" width="150"></a>
+    <!-- <a class="pm" href="http://publicmaundi.eu" target=
+  "_blank"><img height="51" src="../../../assets/img/logo-publicamundi.png"
+  width="200"></a> -->
+    <a class="zoow" href="https://github.com/mmomtchev/libnode" target="_blank">https://github.com/mmomtchev/libnode</a>
+    <div class="reveal">
+        <div class="slides">
+            <section>
+                <h1>Node.js support for ZOO-Project / libnode</h1>
+                <h3>libnode: an API for calling Node.js from C++</h3>
+                <ul class="auth">
+                    <li><b>Momtchil MOMTCHEV - <a href="https://github.com/mmomtchev">Github Profile</a></b></li>
+                </ul>
+            </section>
+            <section data-background-transition="slide">
+                <h2>An introduction to ZOO-Project</h2>
+                <br>
+                <br>
+                <div class="col-xs-12 col-sm-12 col-lg-12 text-justify">
+                    <p class="page"><a class="reference external" href="http://zoo-project.org" target="_blank">ZOO-Project</a> is a Web Processing Service (WPS) implementation written in C and C++.
+                        It is an open source platform, released under MIT/X11 Licence, which implements the <a class="reference external" href="http://www.opengeospatial.org/standards/wps/"
+                            target="_bank">WPS</a> standards (1.0.0 and 2.0.0) published by the <a class="reference external" href="http://www.opengeospatial.org/" target="_blank">OGC</a></p>
+                    <p class="page">ZOO-Project provides a developer-friendly framework for creating and chaining WPS compliant Web Services. Its main goal is to provide generic and standard-compliant
+                        methods for using existing open source librairies as WPS.</p>
+                    <p class="page">JavaScript is currently the fastest growing programming language and features an absolutely huge ecosystem that is mainly centered on the browser, its historical
+                        environment, and Node.js, which is currently the de facto standard runtime outside the browser. Most of the fundamental OSGeo libraries - such as GDAL, GEOS and PROJ - have
+                        been ported to Node.js. </p>
+                </div>
+                <br>
+                <br>
+            </section>
+            <section data-background-transition="slide">
+                <h2>The need</h2>
+                <br>
+                <br>
+                <div class="col-xs-12 col-sm-12 col-lg-12 text-justify">
+                    <div class="page row">
+                        <div class="col-xs-2 col-sm-2 col-lg-2">
+                            <img src="http://zoo-project.org/img/zoo-simple.png">
+                        </div>
+                        <div class="col-xs-10 col-sm-10 col-lg-10">
+                            <small>
+                                <strong>ZOO-Project</strong> is a C/C++ server software that loads and executes user services as separate processes. <code>zoo_loader</code> uses initalizes each
+                                instance and handles the passing of the incoming inputs and the resulting outputs according to the WPS protocol specifications. It uses a shared memory model and
+                                expects the runtime of the programming language to support being loaded as a dynamic library. </small>
+                        </div>
+                    </div>
+                    <div class="page row">
+                        <div class="col-xs-2 col-sm-2 col-lg-2">
+                            <img src="https://nodejs.org/static/images/logos/nodejs-new-pantone-black.svg">
+                        </div>
+                        <div class="col-xs-9 col-sm-9 col-lg-9">
+                            <small>
+                                <strong>Node.js</strong> comes with a very basic support for being built as a shared library that is used and primarily maintained by the Electron Project team. It
+                                lacks a dedicated API and requires using raw V8 primitives to access the object model and good knowledge of Node.js internals for the rest. On the other side, Node.js
+                                features a very advanced and binary stable ABI that allows the calling of dynamically loadable shared C and C++ libraries from JavaScript. </small>
+                        </div>
+                    </div>
+                    <div class="page">So would it be possible, with (<em>hopefully minimal</em>) development effort to return this API <em>inside-out</em> in order to create an universal and binary
+                        stable ABI for calling Node.js code from C++? </div>
+                </div>
+            </section>
+            <section data-background-transition="slide">
+                <h2>Node-API and node-addon-api</h2>
+                <br>
+                <br>
+                <div class="col-xs-12 col-sm-12 col-lg-12 text-center">
+                    <p class="page">
+                        <strong>Node-API</strong> is the official binary stable ABI for calling native shared libraries from Node.js code. It uses basic C semantics for maximum compatibility. It
+                        replaces the older NAN API which was not binary compatible across different Node.js versions. It allows the implementation of <em>glue</em> C code that will deal with the
+                        JavaScript object model, including the garbage collector and its very particular asynchronous concurrency model - in which every asynchronous function is in fact a coroutine.
+                        It is widely used for porting existing C/C++ libraries to Node.js.
+                    </p>
+                    <p class="page">
+                        <strong>node-addon-api</strong> is the higher-level C++ version of Node-API. It is entirely implemented as C++ templates in order to avoid any conflicts between the eventually
+                        different C++ runtimes used to build Node.js and the binary modules. As <code>node-addon-api</code> uses Node-API and it is always built inside the code that uses it, all
+                        dynamic linking takes place using only the basic C API.
+                    </p>
+                </div>
+            </section>
+            <section data-background-transition="slide">
+                <h2><code>libnode</code>: The environment</h2>
+                <br>
+                <br>
+                <div class="col-xs-12 col-sm-12 col-lg-12 text-center">
+                    <p class="page"> Node.js instances support using multiple completely independant threads that cannot share memory - these are called V8 isolates. This model is inherited from the
+                        JavaScript web legacy.</p>
+                    <p class="page">The JavaScript code that runs in those isolates is completely independant, but in fact shares the same C++ runtime behind the scenes. This make these separate
+                        isolates visible from the viewpoint of a C++ shared library - called a native addon in the Node.js world.</p>
+                    <p class="page"> In order to allow the C++ code to differentiate those contexts, a special opaque object, called environment, (<code>node_env</code> type in Node-API and
+                        <code>Napi::Env</code> in node-addon-api), has to be passed every time the C/C++ addon interacts with the Node.js code. </p>
+                </div>
+            </section>
+            <section data-background-transition="slide">
+                <h2><code>libnode</code>: The idea</h2>
+                <br>
+                <br>
+                <div class="col-xs-12 col-sm-12 col-lg-12 text-center">
+                    <p class="page"> So the idea would be to reuse this opaque type, with a different implementation, in order to create a new type of environment - an embedded Node.js instance loaded
+                        from a shared library. We will need:</p>
+                    <ul class="list-page">
+                        <li> New initializating methods that will load the Node.js shared library instance </li>
+                        <li> New JavaScript bootstrapping code that will support the loading of CJS/ES6 modules when called directly from C/C++ </li>
+                        <li> As an added bonus: some means to turn around the asynchronous process model of Node.js, so that the C/C++ code can call it synchronously as long as it does so from a
+                            dedicated thread - this would allow for a much easier and straightforward dealing with JS async code without callbacks. </li>
+                    </ul>
+                </div>
+            </section>
+            <section data-background-transition="slide">
+                <h2><code>libnode</code>: The implementation</h2>
+                <br>
+                <br>
+                <div class="col-xs-12 col-sm-12 col-lg-12 text-center">
+                    <p class="page"> The new Node-API methods:
+                    <ul class="list-page">
+                        <li><code>napi_create_platform</code> / <code>napi_destroy_platform</code> for loading the Node.js runtime as a shared library</li>
+                        <li><code>napi_create_environment</code> / <code>napi_destroy_environment</code> for creating a JavaScript instance (a V8 isolate)</li>
+                        <li><code>napi_run_environment</code> for synchronously spinning the Node.js event loop from C/C++ - allowing to run all enqueued JS callbacks</li>
+                        <li><code>napi_await_promise</code> for partial/incremental spinning of the Node.js event loop - until a given JS <code>Promise</code> is resolved</li>
+                    </ul>
+                    </p>
+                    <p class="page"> And also the new node-addon-api RAII types: <code>Napi::Platform</code> and <code>Napi::PlatformEnv</code>, compatible with <code>Napi::Env</code>
+                    </p>
+                </div>
+            </section>
+            <section data-background-transition="slide">
+                <h2><code>libnode</code>: A small example</h2>
+                <br>
+                <br>
+                <div class="col-xs-12 col-sm-12 col-lg-12 text-center">
+                    <p class="page"> Calling <code>axios</code> form C++ becomes as simple as: <small><code><pre>#include &lt;stdio.h&gt;
+#define NAPI_EXPERIMENTAL
+#include &lt;napi.h&gt;
+    
+int main() {
+  try {
+    Napi::Platform platform; Napi::PlatformEnv env(platform);
+    try {
+      Napi::HandleScope scope(env);
+      Napi::Function import = env.Global().Get(&quot;import&quot;).As&lt;Napi::Function&gt;();
+      Napi::Value axios_promise = import.MakeCallback({Napi::String::New(env, &quot;axios&quot;)});
+      Napi::Object axios_import = axios_promise.As&lt;Napi::Promise&gt;().Await().ToObject();
+      Napi::Promise q = axios.Get(&quot;get&quot;).As&lt;Napi::Function&gt;().MakeCallback(
+        {Napi::String::New(env, &quot;https://www.google.com&quot;)}).As&lt;Napi::Promise&gt;();
+      Napi::Value result = q.Await();
+    } catch (const Napi::Error &amp;e) { fprintf(stderr, &quot;Caught a JS exception: %s\n&quot;, e.what()); }
+  } catch (napi_status r) { fprintf(stderr, &quot;Failed initializing Node.js environment: %d\n&quot;, (int)r); }
+  return 0;
+}</pre></code></small>
+                    </p>
+                </div>
+            </section>
+            <section data-background-transition="slide">
+                <h2><code>libnode</code>: availability</h2>
+                <br>
+                <br>
+                <div class="col-xs-12 col-sm-12 col-lg-12 text-center">
+                    <p class="page">
+                        <code>libnode</code> is currently available as
+                        <ul class="list-page">
+                            <li>PPA package for Ubuntu with
+                                <code>
+                                    sudo add-apt-repository ppa:mmomtchev/libnode
+                                    <br>
+                                    sudo apt update
+                                    <br>
+                                    sudo apt install libnode93 libnode-dev node-addon-api
+                                </code>
+                            </li>
+                            <li>
+                                Source code at github.com/mmomtchev/libnode: <ul>
+                                <li><a href="https://github.com/mmomtchev/node/tree/napi-libnode-v16.x"><code>napi-libnode-v16.x</code> branch for Node.js 16.x</a></li>
+                                <li><a href="https://github.com/mmomtchev/node/tree/napi-libnode"><code>napi-libnode</code> branch for Node.js HEAD</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="https://github.com/nodejs/node/pull/43542">PR #43542</a> for Node.js that might get merged if there is enough momentum
+                            </li>
+                        </ul>
+                    </p>
+                </div>
+            </section>
+            <section>
+                <h2>Questions ?</h2>
+                <br />
+                <h3>KATIKA KWA KUJIBU.</h3>
+                <br />
+                <h3>Thanks for listening.</h3>
+                <br />
+                <h3><b>ありがとうございました</b></h3>
+                <br />
+                <h3>Merci de votre attention.</h3>
+                <br />
+                <!--
+        <p class="auth brn"><b>Gérald FENOY</b> | <a href="http://geolabs.fr"
+        target="_blank">GeoLabs</a> | <a href="https://twitter.com/GeoLabsSARL"
+        target="_blank">@GeoLabsSARL</a></p>
+  -->
+            </section>
+        </div>
+    </div>
+    <script src="../../../assets/lib/js/head.min.js"></script>
+    <script src="../../../assets/js/reveal.min.js"></script>
+    <script>
+
+        // Full list of configuration options available here:
+        // https://github.com/hakimel/reveal.js#configuration
+        Reveal.initialize({
+            controls: true,
+            progress: true,
+            history: true,
+            center: true,
+
+            theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+            transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+            // Parallax scrolling
+            // parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+            // parallaxBackgroundSize: '2100px 900px',
+
+            // Optional libraries used to extend on reveal.js
+            dependencies: [
+                { src: '../../../assets/lib/js/classList.js', condition: function () { return !document.body.classList; } },
+                { src: '../../../assets/plugin/markdown/marked.js', condition: function () { return !!document.querySelector('[data-markdown]'); } },
+                { src: '../../../assets/plugin/markdown/markdown.js', condition: function () { return !!document.querySelector('[data-markdown]'); } },
+                { src: '../../../assets/plugin/highlight/highlight.js', async: true, callback: function () { hljs.initHighlightingOnLoad(); } },
+                { src: '../../../assets/plugin/zoom-js/zoom.js', async: true, condition: function () { return !!document.body.classList; } },
+                { src: '../../../assets/plugin/notes/notes.js', async: true, condition: function () { return !!document.body.classList; } }
+            ]
+        });
+
+    </script>
+</body>
+
+</html>
