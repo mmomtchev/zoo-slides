@@ -88,7 +88,7 @@
                                 features a very advanced and binary stable ABI that allows the calling of dynamically loadable shared C and C++ libraries from JavaScript. </small>
                         </div>
                     </div>
-                    <div class="page">So would it be possible, with (<em>hopefully minimal</em>) development effort to return this API <em>inside-out</em> in order to create an universal and binary
+                    <div class="page">So would it be possible, with (<em>hopefully minimal</em>) development effort to turn this API <em>inside-out</em> in order to create an universal and binary
                         stable ABI for calling Node.js code from C++? </div>
                 </div>
             </section>
@@ -182,12 +182,39 @@ try {
                 </div>
             </section>
             <section data-background-transition="slide">
+                <h2><code>libnode</code>: Using in ZOO-Project</h2>
+                <br>
+                <br>
+                <div class="col-xs-12 col-sm-12 col-lg-12 text-center">
+                    <p class="page">For ZOO-Project, <code>libnode</code> enables full Node.js support
+                    and compatibility with the huge NPM ecosystem.
+                    </p>
+                    <p class="page">Each WPS service can be implemented as either a CJS or ES6
+                        module that can be transparently called from C/C++ with parameters - the
+                        calling convention conversion is implemented in <code>zoo_loader</code> using
+                        the <code>node-addon-api</code>/<code>libnode</code> primitives.
+                    </p>
+                    <p class="page">
+                        <code><pre>import proj4 from &#39;proj4&#39;;
+import gdal from &#39;gdal-async&#39;;
+export function hellonodejs_es6(conf, inputs, outputs) {
+    ZOOUpdateStatus(conf, 0);
+    outputs[&quot;result&quot;][&quot;value&quot;] = &quot;Hello &quot;
+        + inputs[&quot;S&quot;][&quot;value&quot;]
+        + &quot; from the JS World (ES6 mode) !&quot;;
+    ZOOUpdateStatus(conf, 100);
+    return SERVICE_SUCCEEDED;
+}</code></pre>
+                    </p>
+                </div>
+            </section>
+            <section data-background-transition="slide">
                 <h2><code>libnode</code>: availability</h2>
                 <br>
                 <br>
                 <div class="col-xs-12 col-sm-12 col-lg-12 text-center">
                     <p class="page">
-                        <code>libnode</code> is currently available as
+                        <code>libnode</code> is currently available only on Linux as
                         <ul class="list-page">
                             <li>PPA package for Ubuntu with
                                 <code>
