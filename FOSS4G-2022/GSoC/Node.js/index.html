@@ -160,25 +160,24 @@
                 <br>
                 <br>
                 <div class="col-xs-12 col-sm-12 col-lg-12 text-center">
-                    <p class="page"> Calling <code>axios</code> form C++ becomes as simple as: <small><code><pre>#include &lt;stdio.h&gt;
-#define NAPI_EXPERIMENTAL
+                    <p class="page"> Calling <code>axios.get</code> from C++ becomes as simple as: <code><pre>#define NAPI_EXPERIMENTAL
 #include &lt;napi.h&gt;
     
-int main() {
+try {
+  Napi::Platform platform; Napi::PlatformEnv env(platform);
   try {
-    Napi::Platform platform; Napi::PlatformEnv env(platform);
-    try {
-      Napi::HandleScope scope(env);
-      Napi::Function import = env.Global().Get(&quot;import&quot;).As&lt;Napi::Function&gt;();
-      Napi::Value axios_promise = import.MakeCallback({Napi::String::New(env, &quot;axios&quot;)});
-      Napi::Object axios_import = axios_promise.As&lt;Napi::Promise&gt;().Await().ToObject();
-      Napi::Promise q = axios.Get(&quot;get&quot;).As&lt;Napi::Function&gt;().MakeCallback(
-        {Napi::String::New(env, &quot;https://www.google.com&quot;)}).As&lt;Napi::Promise&gt;();
-      Napi::Value result = q.Await();
-    } catch (const Napi::Error &amp;e) { fprintf(stderr, &quot;Caught a JS exception: %s\n&quot;, e.what()); }
-  } catch (napi_status r) { fprintf(stderr, &quot;Failed initializing Node.js environment: %d\n&quot;, (int)r); }
-  return 0;
-}</pre></code></small>
+    Napi::HandleScope scope(env);
+    Napi::Function require = env.Global().Get(&quot;require&quot;)
+        .As&lt;Napi::Function&gt;();
+    Napi::Object axios = require({Napi::String::New(env, &quot;axios&quot;)})
+        .ToObject();
+    Napi::Value result = axios.Get(&quot;get&quot;).As&lt;Napi::Function&gt;()
+        .MakeCallback({
+            Napi::String::New(env, &quot;https://www.google.com&quot;)
+        }).As&lt;Napi::Promise&gt;().Await();
+  } catch (const Napi::Error &amp;e) { fprintf(stderr, &quot;JS exception: %s\n&quot;, e.what()); }
+} catch (napi_status r) { fprintf(stderr, &quot;Failed initializing Node.js environment: %d\n&quot;, (int)r); }
+</pre></code>
                     </p>
                 </div>
             </section>
