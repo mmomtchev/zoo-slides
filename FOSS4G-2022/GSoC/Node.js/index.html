@@ -160,25 +160,26 @@
                 <br>
                 <br>
                 <div class="col-xs-12 col-sm-12 col-lg-12 text-center">
-                    <p class="page"> Calling <code>axios.get</code> from C++ becomes as simple as: <code><pre>#define NAPI_EXPERIMENTAL
+                    <p class="page"> Calling <code>axios.get</code> from C++ becomes as simple as:</p>
+<pre><code class="fragment highlight-current-red" data-fragment-index="1">#define NAPI_EXPERIMENTAL
 #include &lt;napi.h&gt;
-    
-try {
+</code><code class="fragment highlight-current-red" data-fragment-index="2">try {
   Napi::Platform platform; Napi::PlatformEnv env(platform);
-  try {
-    Napi::HandleScope scope(env);
-    Napi::Function require = env.Global().Get(&quot;require&quot;)
+</code><code class="fragment highlight-current-red" data-fragment-index="7"> try {
+</code><code class="fragment highlight-current-red" data-fragment-index="3">   Napi::HandleScope scope(env);
+</code><code class="fragment highlight-current-red" data-fragment-index="4">   Napi::Function require = env.Global().Get(&quot;require&quot;)
         .As&lt;Napi::Function&gt;();
-    Napi::Object axios = require({Napi::String::New(env, &quot;axios&quot;)})
+</code><code class="fragment highlight-current-red" data-fragment-index="5">   Napi::Object axios = require({Napi::String::New(env, &quot;axios&quot;)})
         .ToObject();
-    Napi::Value result = axios.Get(&quot;get&quot;).As&lt;Napi::Function&gt;()
+</code><code class="fragment highlight-current-red" data-fragment-index="6">   Napi::Value result = axios.Get(&quot;get&quot;).As&lt;Napi::Function&gt;()
         .MakeCallback({
             Napi::String::New(env, &quot;https://www.google.com&quot;)
         }).As&lt;Napi::Promise&gt;().Await();
-  } catch (const Napi::Error &amp;e) { fprintf(stderr, &quot;JS exception: %s\n&quot;, e.what()); }
-} catch (napi_status r) { fprintf(stderr, &quot;Failed initializing Node.js environment: %d\n&quot;, (int)r); }
-</pre></code>
-                    </p>
+</code><code class="fragment highlight-current-red" data-fragment-index="7"> } catch (const Napi::Error &amp;e)
+  { fprintf(stderr, &quot;JS exception: %s\n&quot;, e.what()); }
+</code><code class="fragment highlight-current-red" data-fragment-index="2">} catch (napi_status r)
+  { fprintf(stderr, &quot;Failed initializing Node.js environment: %d\n&quot;, (int)r); }
+</code></pre>
                 </div>
             </section>
             <section data-background-transition="slide">
